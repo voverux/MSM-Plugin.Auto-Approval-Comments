@@ -1,0 +1,138 @@
+﻿<meta http-equiv="Content-type" content="text/html;charset=UTF-8">
+<script src="Template.js"></script>
+<script>
+    (function () {
+
+        var MarvalSoftware = window.top.MarvalSoftware;
+        var $ = window.top.$;
+
+        MarvalSoftware.Plugins.define("marval-baltic-plugins-auto-approval-comments",
+            {
+                _pluginPath: null,
+                _pluginId: "marval-baltic-plugins-auto-approval-comments",
+                _pluginHandlerRequest: null,
+                _pluginSettings: {
+                    "approveComment": "Approve Comment",
+                    "rejectComment": "Reject Comment",
+                    "overrideExisting": true
+                },
+
+                _getPluginPath: function () {
+                    return this.attributes["data-pluginpath"].value;
+                },
+
+                init: function () {
+                    if (this._getRequestBaseTypeId() != 4) return;
+                    this._getPluginSettings(
+                        this,
+                        this._setExtraEvents
+                    );
+                },
+
+                _getRequestBaseTypeId: function () {
+                    var page = MarvalSoftware.UI.Controls.ScriptManager.getInstance().getControl("__Page");
+                    if (!page) return 0;
+                    return page._baseRequestTypeId;
+                },
+
+                _getPluginSettings: function (plugin, callback) {
+                    if (this._pluginHandlerRequest) {
+                        this._pluginHandlerRequest.abort();
+                        this._pluginHandlerRequest = null;
+                    }
+                    this._pluginHandlerRequest = $.ajax({
+                        type: "GET",
+                        url: this._getPluginPath() + "handler/AutoApprovalCommentsHandler.ashx",
+                        contentType: "application/json; charset=utf-8",
+                        dataType: "json",
+                        success: function (result) {
+                            if (result) {
+                                plugin._pluginSettings = result;
+                                callback(plugin);
+                            }
+                        }.bind(this),
+                        error: function (xhr, ajaxOptions, thrownError) {
+                            if (xhr.status > 0) this._showErrorMessage("Plugin Handler Error!\n" + xhr.status + '\n' + thrownError);
+                        }.bind(this)
+                    });
+                },
+
+                _setExtraEvents: function (plugin) {
+                    if (plugin._pluginSettings.approveComment || plugin._pluginSettings.rejectComment) {
+                        var pnd_apprs = $(".approvalsEditor.request > .tabStrip > .tabPages > .tabPage .pending > ul > li");
+                        for (var i = 0; i < pnd_apprs.length; i++) {
+                            var pnd_appr_cmb = $(pnd_apprs[i]).find(".approval > .topLine > select");
+                            if (pnd_appr_cmb.length) {
+                                plugin._addExtraEvent(pnd_appr_cmb[0], "change", plugin);
+                            }
+                        }
+                    }
+                },
+
+                _addExtraEvent: function (elmt, event, plugin) {
+                    if (elmt) {
+                        if (elmt.addEventListener) {
+                            elmt.addEventListener(event, function (e) {
+                                plugin._extraEvent(plugin, this.value, this.parentElement.parentElement);
+                            }
+                                , false);
+                        }
+                        else if (elmt.attachEvent) {
+                            elmt.attachEvent("on" + event, function (e) {
+                                plugin._extraEvent(plugin, this.value, this.parentElement.parentElement);
+                            });
+                        }
+                    }
+                },
+
+                _extraEvent: function (plugin, selectedValue, pnd_appr_cntnr) {
+                    var elm_cmnts = $(pnd_appr_cntnr).find(".bottomLine textarea");
+                    if (elm_cmnts.length) {
+                        elm_cmnt = elm_cmnts[0];
+                        plugin._fireEvent(elm_cmnt, "focus");
+                        switch (selectedValue) {
+                            case "2":
+                                if (plugin._pluginSettings.overrideExisting || elm_cmnt.value.length == 0 || elm_cmnt.value == plugin._pluginSettings.rejectComment)
+                                    elm_cmnt.value = plugin._pluginSettings.approveComment;
+                                break;
+                            case "3":
+                                if (plugin._pluginSettings.overrideExisting || elm_cmnt.value.length == 0 || elm_cmnt.value == plugin._pluginSettings.approveComment)
+                                    elm_cmnt.value = plugin._pluginSettings.rejectComment;
+                                break;
+                            default:
+                                if (plugin._pluginSettings.overrideExisting || elm_cmnt.value == plugin._pluginSettings.approveComment || elm_cmnt.value == plugin._pluginSettings.rejectComment)
+                                    elm_cmnt.value = "";
+                                break;
+                        }
+                        plugin._fireEvent(elm_cmnt, "change");
+                        plugin._fireEvent(elm_cmnt, "blur");
+                    }
+                },
+
+                _fireEvent: function (element, event) {
+                    if (document.createEventObject) { // IE
+                        var evt = document.createEventObject();
+                        return element.fireEvent('on' + event, evt)
+                    }
+                    else { // Others
+                        var evt = document.createEvent("Events");
+                        evt.initEvent(event, true, true); // event type,bubbling,cancelable
+                        return !element.dispatchEvent(evt);
+                    }
+                },
+
+                _showErrorMessage: function (errorMessage) {
+                    MarvalSoftware.UI.MessageBox.show(
+                        "Auto Approval Comments Plugin Error",
+                        errorMessage,
+                        MarvalSoftware.UI.MessageBox.Types.ERROR,
+                        null,
+                        null,
+                        400
+                    );
+                }
+
+            });
+
+    })();
+</script>
