@@ -16,6 +16,7 @@
                     "rejectComment": "Reject Comment",
                     "overrideExisting": true
                 },
+                _defaultComment: "Please enter your approval / rejection reason here",
 
                 _getPluginPath: function () {
                     return this.attributes["data-pluginpath"].value;
@@ -73,40 +74,61 @@
                     if (elmt) {
                         if (elmt.addEventListener) {
                             elmt.addEventListener(event, function (e) {
-                                plugin._extraEvent(plugin, this.value, this.parentElement.parentElement);
+                                plugin._extraEvent(this, plugin);
                             }
                                 , false);
                         }
                         else if (elmt.attachEvent) {
                             elmt.attachEvent("on" + event, function (e) {
-                                plugin._extraEvent(plugin, this.value, this.parentElement.parentElement);
+                                plugin._extraEvent(this, plugin);
                             });
                         }
                     }
                 },
 
-                _extraEvent: function (plugin, selectedValue, pnd_appr_cntnr) {
-                    var elm_cmnts = $(pnd_appr_cntnr).find(".bottomLine textarea");
+                _extraEvent: function (elm, plugin) {
+                    var elm_cmnts = $(elm.parentElement.parentElement).find(".bottomLine textarea");
                     if (elm_cmnts.length) {
                         elm_cmnt = elm_cmnts[0];
-                        plugin._fireEvent(elm_cmnt, "focus");
-                        switch (selectedValue) {
+                        switch (elm.value) {
                             case "2":
-                                if (plugin._pluginSettings.overrideExisting || elm_cmnt.value.length == 0 || elm_cmnt.value == plugin._pluginSettings.rejectComment)
-                                    elm_cmnt.value = plugin._pluginSettings.approveComment;
+                                if (plugin._pluginSettings.approveComment.length > 0 &&
+                                    (
+                                        plugin._pluginSettings.overrideExisting ||
+                                        elm_cmnt.value.length === 0 ||
+                                        elm_cmnt.value === plugin._defaultComment ||
+                                        elm_cmnt.value === plugin._pluginSettings.rejectComment
+                                    )
+                                ) {
+                                    plugin._setApprovalCommentValue(elm_cmnt, plugin._pluginSettings.approveComment);
+                                }
                                 break;
                             case "3":
-                                if (plugin._pluginSettings.overrideExisting || elm_cmnt.value.length == 0 || elm_cmnt.value == plugin._pluginSettings.approveComment)
-                                    elm_cmnt.value = plugin._pluginSettings.rejectComment;
+                                if (plugin._pluginSettings.rejectComment.length > 0 &&
+                                    (
+                                        plugin._pluginSettings.overrideExisting ||
+                                        elm_cmnt.value.length === 0 ||
+                                        elm_cmnt.value === plugin._defaultComment ||
+                                        elm_cmnt.value === plugin._pluginSettings.approveComment
+                                    )
+                                ) {
+                                    plugin._setApprovalCommentValue(elm_cmnt, plugin._pluginSettings.rejectComment);
+                                }
                                 break;
                             default:
-                                if (plugin._pluginSettings.overrideExisting || elm_cmnt.value == plugin._pluginSettings.approveComment || elm_cmnt.value == plugin._pluginSettings.rejectComment)
-                                    elm_cmnt.value = "";
+                                if (plugin._pluginSettings.overrideExisting || elm_cmnt.value == plugin._pluginSettings.approveComment || elm_cmnt.value == plugin._pluginSettings.rejectComment) {
+                                    plugin._setApprovalCommentValue(elm_cmnt, "");
+                                }
                                 break;
                         }
-                        plugin._fireEvent(elm_cmnt, "change");
-                        plugin._fireEvent(elm_cmnt, "blur");
                     }
+                },
+
+                _setApprovalCommentValue: function (element, newval) {
+                    this._fireEvent(element, "focus");
+                    element.value = newval;
+                    this._fireEvent(element, "change");
+                    this._fireEvent(element, "blur");
                 },
 
                 _fireEvent: function (element, event) {
