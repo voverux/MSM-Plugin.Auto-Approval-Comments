@@ -92,25 +92,21 @@
                         elm_cmnt = elm_cmnts[0];
                         switch (elm.value) {
                             case "2":
-                                if (plugin._pluginSettings.approveComment.length > 0 &&
-                                    (
-                                        plugin._pluginSettings.overrideExisting ||
-                                        elm_cmnt.value.length === 0 ||
-                                        elm_cmnt.value === plugin._defaultComment ||
-                                        elm_cmnt.value === plugin._pluginSettings.rejectComment
-                                    )
+                                if (
+                                    plugin._pluginSettings.overrideExisting ||
+                                    elm_cmnt.value.length === 0 ||
+                                    elm_cmnt.value === plugin._defaultComment ||
+                                    elm_cmnt.value === plugin._pluginSettings.rejectComment
                                 ) {
                                     plugin._setApprovalCommentValue(elm_cmnt, plugin._pluginSettings.approveComment);
                                 }
                                 break;
                             case "3":
-                                if (plugin._pluginSettings.rejectComment.length > 0 &&
-                                    (
-                                        plugin._pluginSettings.overrideExisting ||
-                                        elm_cmnt.value.length === 0 ||
-                                        elm_cmnt.value === plugin._defaultComment ||
-                                        elm_cmnt.value === plugin._pluginSettings.approveComment
-                                    )
+                                if (
+                                    plugin._pluginSettings.overrideExisting ||
+                                    elm_cmnt.value.length === 0 ||
+                                    elm_cmnt.value === plugin._defaultComment ||
+                                    elm_cmnt.value === plugin._pluginSettings.approveComment
                                 ) {
                                     plugin._setApprovalCommentValue(elm_cmnt, plugin._pluginSettings.rejectComment);
                                 }
